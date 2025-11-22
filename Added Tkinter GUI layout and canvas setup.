@@ -1,0 +1,36 @@
+import tkinter as tk
+from tkinter import simpledialog, messagebox
+import sys
+class RAG_GUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Graphical Resource Allocation Graph Simulator")
+
+        # Canvas
+        self.canvas = tk.Canvas(root, width=900, height=600, bg="white")
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        # Button frame
+        btn_frame = tk.Frame(root)
+        btn_frame.pack(pady=6)
+
+        tk.Button(btn_frame, text="Add Process", command=self.add_process).grid(row=0, column=0, padx=4)
+        tk.Button(btn_frame, text="Add Resource", command=self.add_resource).grid(row=0, column=1, padx=4)
+        tk.Button(btn_frame, text="Add Edge", command=self.add_edge).grid(row=0, column=2, padx=4)
+        tk.Button(btn_frame, text="Detect Deadlock", command=self.detect_deadlock).grid(row=0, column=3, padx=4)
+        tk.Button(btn_frame, text="Clear Highlights", command=self.clear_highlights).grid(row=0, column=4, padx=4)
+        tk.Button(btn_frame, text="Reset Graph", command=self.reset_graph).grid(row=0, column=5, padx=4)
+
+        # Graph data
+        # nodes: name -> (x, y, shape_id, text_id)
+        self.nodes = {}
+        # adjacency list: name -> list of neighbor names
+        self.adj = {}
+        # edges: (u,v) -> canvas_line_id (store list if multiple)
+        self.edges = {}
+        # highlighted edge ids
+        self.highlighted = []
+
+        # placement cursor
+        self.next_px = 100
+        self.next_py = 100
