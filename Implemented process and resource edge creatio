@@ -1,0 +1,51 @@
+def add_edge(self):
+        u = simpledialog.askstring("From", "From Node (e.g., P1 or R1):")
+        if u is None: return
+        v = simpledialog.askstring("To", "To Node (e.g., R1 or P1):")
+        if v is None: return
+
+        u = u.strip(); v = v.strip()
+        if not u or not v:
+            messagebox.showerror("Error", "Node names cannot be empty.")
+            return
+
+        if u not in self.nodes or v not in self.nodes:
+            messagebox.showerror("Error", "Invalid node(s). Make sure nodes exist before creating edges.")
+            return
+
+        # prevent duplicate edge drawing
+        key = (u, v)
+        self.adj.setdefault(u, [])
+        if v in self.adj[u]:
+            messagebox.showwarning("Warning", f"Edge {u} -> {v} already exists.")
+            return
+
+        self.adj[u].append(v)
+        line_id = self.draw_arrow(u, v)
+        # store edge id(s)
+        self.edges.setdefault(key, []).append(line_id)
+
+    def draw_arrow(self, u, v, color="black", width=2):
+        x1, y1, _, _ = self.nodes[u]
+        x2, y2, _, _ = self.nodes[v]
+
+        # Small offset so arrow doesn't overlap text: move start/end slightly toward center
+        dx = x2 - x1
+        dy = y2 - y1
+        dist = (dx*dx + dy*dy) ** 0.5
+        if dist == 0:
+            # same position (shouldn't happen) - draw tiny loop
+            line = self.canvas.create_oval(x1-10, y1-10, x1+10, y1+10, outline=color, width=width)
+            return line
+
+        # Move ends inward by radius (approx half node size)
+        offset = 25
+        ux = dx / dist
+        uy = dy / dist
+        sx = x1 + ux * offset
+        sy = y1 + uy * offset
+        ex = x2 - ux * offset
+        ey = y2 - uy * offset
+
+        line = self.canvas.create_line(sx, sy, ex, ey, arrow=tk.LAST, width=width, fill=color)
+        return line
