@@ -1,0 +1,75 @@
+ def detect_deadlock(self):
+        # clear previous highlights
+        self.clear_highlights()
+
+        visited = set()
+        stack = set()
+
+        for node in list(self.adj.keys()):
+            if node not in visited:
+                cycle = self.dfs(node, visited, stack, [])
+                if cycle:
+                    # highlight and show
+                    self.highlight_cycle(cycle)
+                    messagebox.showerror("DEADLOCK DETECTED", f"Cycle Found:\n{' → '.join(cycle)}")
+                    print("Deadlock cycle:", " -> ".join(cycle), file=sys.stderr)
+                    return
+        messagebox.showinfo("Status", "No Deadlock Detected")
+        print("No deadlock detected.", file=sys.stderr)
+
+    def dfs(self, u, visited, stack, path):
+        visited.add(u)
+        stack.add(u)
+        path.append(u)
+
+        # iterate neighbors safely
+        neighbors = self.adj.get(u, [])
+        for v in neighbors:
+            if v not in visited:
+                result = self.dfs(v, visited, stack, path)
+                if result:
+                    return result
+            elif v in stack:
+                # found cycle; return a copy of the cycle path
+                try:
+                    idx = path.index(v)
+                    return path[idx:] + [v]
+                except ValueError:
+                    # Shouldn't happen, but be safe
+                    return [v, u, v]
+
+        stack.remove(u)
+        path.pop()
+        return None
+
+    def highlight_cycle(self, cycle):
+        # draw/redraw the cycle edges with red color and store ids
+        for i in range(len(cycle) - 1):
+            u = cycle[i]; v = cycle[i+1]
+            # if we have existing line(s) for this edge, recolor them; otherwise draw new
+            key = (u, v)
+            if key in self.edges:
+                for line_id in self.edges[key]:
+                    self.canvas.itemconfigure(line_id, fill="red", width=3)
+                    self.highlighted.append(line_id)
+            else:
+                line_id = self.draw_arrow(u, v, color="red", width=3)
+                self.highlighted.append(line_id)
+
+    def clear_highlights(self):
+        for line_id in self.highlighted:
+            try:
+                self.canvas.itemconfigure(line_id, fill="black", width=2)
+            except tk.TclError:
+                pass
+        self.highlighted = []
+
+    def reset_graph(self):
+        # clear everything
+        self.canvas.delete("all")
+        self.nodes.clear()
+        self.adj.clear()
+        self.edges.clear()
+        self.highlighted.clear()
+        self.next_px = 100
+        self.next_py = 100
