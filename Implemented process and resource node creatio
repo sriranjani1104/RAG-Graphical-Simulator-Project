@@ -1,0 +1,44 @@
+def add_process(self):
+        pid = simpledialog.askstring("Process", "Enter Process ID (e.g., P1):")
+        if pid is None:
+            return
+        pid = pid.strip()
+        if not pid:
+            messagebox.showerror("Error", "Process ID cannot be empty.")
+            return
+        self.create_node(pid, "process")
+
+    def add_resource(self):
+        rid = simpledialog.askstring("Resource", "Enter Resource ID (e.g., R1):")
+        if rid is None:
+            return
+        rid = rid.strip()
+        if not rid:
+            messagebox.showerror("Error", "Resource ID cannot be empty.")
+            return
+        self.create_node(rid, "resource")
+
+    def create_node(self, name, kind):
+        # prevent duplicates
+        if name in self.nodes:
+            messagebox.showwarning("Warning", f"Node '{name}' already exists.")
+            return
+
+        x = self.next_px
+        y = self.next_py
+
+        size = 50
+        if kind == "process":
+            shape = self.canvas.create_oval(x, y, x+size, y+size, fill="lightblue", outline="black")
+        else:
+            shape = self.canvas.create_rectangle(x, y, x+size, y+size, fill="lightgreen", outline="black")
+
+        text = self.canvas.create_text(x + size/2, y + size/2, text=name, font=("Arial", 10))
+        self.nodes[name] = (x + size/2, y + size/2, shape, text)
+        self.adj[name] = []
+
+        # update placement cursor
+        self.next_px += 120
+        if self.next_px > 700:
+            self.next_px = 100
+            self.next_py += 120
