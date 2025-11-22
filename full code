@@ -1,0 +1,109 @@
+import tkinter as tk
+from tkinter import simpledialog, messagebox
+import math
+
+class RAG_GUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Graphical Resource Allocation Graph Simulator")
+
+        self.canvas = tk.Canvas(root, width=900, height=600, bg="white")
+        self.canvas.pack()
+
+        btn_frame = tk.Frame(root)
+        btn_frame.pack()
+
+        tk.Button(btn_frame, text="Add Process", command=self.add_process).grid(row=0, column=0)
+        tk.Button(btn_frame, text="Add Resource", command=self.add_resource).grid(row=0, column=1)
+        tk.Button(btn_frame, text="Add Edge", command=self.add_edge).grid(row=0, column=2)
+        tk.Button(btn_frame, text="Detect Deadlock", command=self.detect_deadlock).grid(row=0, column=3)
+
+        self.nodes = {}
+        self.adj = {}
+        self.next_px = 100
+        self.next_py = 100
+
+    def add_process(self):
+        pid = simpledialog.askstring("Process", "Enter Process ID (e.g., P1):")
+        if not pid: return
+        self.create_node(pid, "process")
+
+    def add_resource(self):
+        rid = simpledialog.askstring("Resource", "Enter Resource ID (e.g., R1):")
+        if not rid: return
+        self.create_node(rid, "resource")
+
+    def create_node(self, name, type):
+        x = self.next_px
+        y = self.next_py
+
+        if type == "process":
+            shape = self.canvas.create_oval(x, y, x+50, y+50, fill="lightblue")
+        else:
+            shape = self.canvas.create_rectangle(x, y, x+50, y+50, fill="lightgreen")
+
+        text = self.canvas.create_text(x+25, y+25, text=name, font=("Arial", 10))
+
+        self.nodes[name] = (x+25, y+25, shape, text)
+        self.adj[name] = []
+
+        self.next_px += 120
+        if self.next_px > 700:
+            self.next_px = 100
+            self.next_py += 120
+
+    def add_edge(self):
+        u = simpledialog.askstring("From", "From Node (P1/R1):")
+        v = simpledialog.askstring("To", "To Node (P2/R2):")
+
+        if u not in self.nodes or v not in self.nodes:
+            messagebox.showerror("Error", "Invalid node(s).")
+            return
+
+        self.adj[u].append(v)
+        self.draw_arrow(u, v)
+
+    def draw_arrow(self, u, v, color="black"):
+        x1, y1, _, _ = self.nodes[u]
+        x2, y2, _, _ = self.nodes[v]
+        self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST, width=2, fill=color)
+
+    def detect_deadlock(self):
+        visited = set()
+        stack = set()
+
+        for node in self.adj:
+            if node not in visited:
+                cycle = self.dfs(node, visited, stack, [])
+                if cycle:
+                    self.highlight_cycle(cycle)
+                    messagebox.showerror("DEADLOCK DETECTED", f"Cycle Found:\n{' → '.join(cycle)}")
+                    return
+
+        messagebox.showinfo("Status", "No Deadlock Detected")
+
+    def dfs(self, u, visited, stack, path):
+        visited.add(u)
+        stack.add(u)
+        path.append(u)
+
+        for v in self.adj[u]:
+            if v not in visited:
+                result = self.dfs(v, visited, stack, path)
+                if result:
+                    return result
+            elif v in stack:
+                idx = path.index(v)
+                return path[idx:] + [v]
+
+        stack.remove(u)
+        path.pop()
+        return None
+
+    def highlight_cycle(self, cycle):
+        for i in range(len(cycle)-1):
+            self.draw_arrow(cycle[i], cycle[i+1], color="red")
+
+root = tk.Tk()
+app = RAG_GUI(root)
+root.mainloop()
